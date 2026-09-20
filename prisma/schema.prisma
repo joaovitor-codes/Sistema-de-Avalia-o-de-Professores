@@ -1,0 +1,362 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TipoUsuario {
+  ALUNO
+  PROFESSOR
+  ADMINISTRADOR
+
+  @@map("tipo_usuario_enum")
+}
+
+model Conta {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email             String    @unique @db.VarChar(255)
+  senhaHash         String    @map("senha_hash") @db.VarChar(255)
+  emailVerificado   Boolean   @default(false) @map("email_verificado")
+  emailVerificadoEm DateTime? @map("email_verificado_em") @db.Timestamptz(6)
+  ativo             Boolean   @default(true)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  usuario                Usuario?                @relation("ContaUsuario")
+  tokensVerificacaoEmail TokenVerificacaoEmail[]
+  tokensResetSenha       TokenResetSenha[]
+  sessoes                Sessao[]
+  tentativasLogin        TentativaLogin[]
+
+  @@map("contas")
+}
+
+model Usuario {
+  id             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contaId        String      @unique @map("conta_id") @db.Uuid
+  nome           String      @db.VarChar(255)
+  tipoUsuario    TipoUsuario @map("tipo_usuario")
+  dataNascimento DateTime?   @map("data_nascimento") @db.Date
+  fotoPerfilUrl  String?     @map("foto_perfil_url") @db.VarChar(500)
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime?   @map("deleted_at") @db.Timestamptz(6)
+
+  conta      Conta       @relation("ContaUsuario", fields: [contaId], references: [id])
+  telefones  Telefone[]
+  enderecos  Endereco[]
+  professor  Professor?
+  avaliacoes Avaliacao[] @relation("AvaliacoesFeitas")
+
+  @@map("usuarios")
+}
+
+enum TipoContato {
+  celular
+  fixo
+  whatsapp
+
+  @@map("tipo_contato_enum")
+}
+
+model Telefone {
+  id        String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ddi       String?     @db.VarChar(5)
+  numero    String      @db.VarChar(20)
+  tipo      TipoContato @default(celular)
+  principal Boolean     @default(false)
+  usuarioId String?     @map("usuario_id") @db.Uuid
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  usuario Usuario? @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
+  @@map("telefones")
+}
+
+model Endereco {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cep         String?  @db.VarChar(9)
+  logradouro  String?  @db.VarChar(255)
+  numero      String?  @db.VarChar(20)
+  complemento String?  @db.VarChar(100)
+  bairro      String?  @db.VarChar(100)
+  cidade      String?  @db.VarChar(100)
+  estado      String?  @db.VarChar(2)
+  pais        String   @default("Brasil") @db.VarChar(100)
+  principal   Boolean  @default(false)
+  usuarioId   String?  @map("usuario_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // onDelete: Cascade: um endereço sem dono não tem razão de existir.
+  usuario Usuario? @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
+  @@index([cep])
+  @@map("enderecos")
+}
+
+model TokenVerificacaoEmail {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contaId   String    @map("conta_id") @db.Uuid
+  token     String    @unique @db.VarChar(255)
+  expiraEm  DateTime  @map("expira_em") @db.Timestamptz(6)
+  usadoEm   DateTime? @map("usado_em") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  conta Conta @relation(fields: [contaId], references: [id])
+
+  @@index([contaId])
+  @@map("tokens_verificacao_email")
+}
+
+model TokenResetSenha {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contaId   String    @map("conta_id") @db.Uuid
+  token     String    @unique @db.VarChar(255)
+  expiraEm  DateTime  @map("expira_em") @db.Timestamptz(6)
+  usadoEm   DateTime? @map("usado_em") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  conta Conta @relation(fields: [contaId], references: [id])
+
+  @@index([contaId])
+  @@map("tokens_reset_senha")
+}
+
+model Sessao {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contaId          String    @map("conta_id") @db.Uuid
+  refreshTokenHash String    @unique @map("refresh_token_hash") @db.VarChar(255)
+  userAgent        String?   @map("user_agent") @db.VarChar(500)
+  ipAddress        String?   @map("ip_address") @db.VarChar(45)
+  expiraEm         DateTime  @map("expira_em") @db.Timestamptz(6)
+  revogadoEm       DateTime? @map("revogado_em") @db.Timestamptz(6)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  conta Conta @relation(fields: [contaId], references: [id])
+
+  @@index([contaId])
+  @@map("sessoes")
+}
+
+model TentativaLogin {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contaId      String?  @map("conta_id") @db.Uuid
+  emailTentado String   @map("email_tentado") @db.VarChar(255)
+  sucesso      Boolean
+  ipAddress    String?  @map("ip_address") @db.VarChar(45)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  conta Conta? @relation(fields: [contaId], references: [id])
+
+  @@index([emailTentado, createdAt])
+  @@map("tentativas_login")
+}
+
+// =========================================================================
+// Domínio: instituições, cursos, disciplinas, professores e avaliações
+// =========================================================================
+
+enum GrauAcademico {
+  TECNICO
+  TECNOLOGO
+  LICENCIATURA
+  BACHARELADO
+  POS_GRADUACAO
+  MESTRADO
+  DOUTORADO
+
+  @@map("grau_academico_enum")
+}
+
+enum Titulacao {
+  GRADUADO
+  ESPECIALISTA
+  MESTRE
+  DOUTOR
+  POS_DOUTOR
+
+  @@map("titulacao_enum")
+}
+
+model Instituicao {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome      String    @db.VarChar(255)
+  sigla     String?   @db.VarChar(20)
+  cidade    String?   @db.VarChar(100)
+  estado    String?   @db.VarChar(2)
+  logoUrl   String?   @map("logo_url") @db.VarChar(500)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  cursos      Curso[]
+  disciplinas Disciplina[]
+  professores ProfessorInstituicao[]
+
+  @@map("instituicoes")
+}
+
+model Curso {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  instituicaoId String        @map("instituicao_id") @db.Uuid
+  nome          String        @db.VarChar(255)
+  grau          GrauAcademico
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime?     @map("deleted_at") @db.Timestamptz(6)
+
+  instituicao Instituicao       @relation(fields: [instituicaoId], references: [id])
+  disciplinas CursoDisciplina[]
+
+  @@index([instituicaoId])
+  @@map("cursos")
+}
+
+model Disciplina {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  instituicaoId String    @map("instituicao_id") @db.Uuid
+  nome          String    @db.VarChar(255)
+  codigo        String?   @db.VarChar(30)
+  cargaHoraria  Int?      @map("carga_horaria")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  instituicao Instituicao           @relation(fields: [instituicaoId], references: [id])
+  cursos      CursoDisciplina[]
+  professores ProfessorDisciplina[]
+  avaliacoes  Avaliacao[]
+
+  @@index([instituicaoId])
+  @@map("disciplinas")
+}
+
+// Grade curricular: quais disciplinas compõem quais cursos (N:N).
+model CursoDisciplina {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cursoId      String   @map("curso_id") @db.Uuid
+  disciplinaId String   @map("disciplina_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  curso      Curso      @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+  disciplina Disciplina @relation(fields: [disciplinaId], references: [id], onDelete: Cascade)
+
+  @@unique([cursoId, disciplinaId])
+  @@index([disciplinaId])
+  @@map("curso_disciplinas")
+}
+
+// Perfil de professor: 1:1 com Usuario (tipoUsuario = PROFESSOR).
+model Professor {
+  id        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  usuarioId String     @unique @map("usuario_id") @db.Uuid
+  titulacao Titulacao?
+  biografia String?    @db.Text
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime?  @map("deleted_at") @db.Timestamptz(6)
+
+  usuario      Usuario                @relation(fields: [usuarioId], references: [id])
+  instituicoes ProfessorInstituicao[]
+  disciplinas  ProfessorDisciplina[]
+  avaliacoes   Avaliacao[]
+
+  @@map("professores")
+}
+
+// Em quais instituições um professor atua (N:N).
+model ProfessorInstituicao {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  professorId   String   @map("professor_id") @db.Uuid
+  instituicaoId String   @map("instituicao_id") @db.Uuid
+  departamento  String?  @db.VarChar(150)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  professor   Professor   @relation(fields: [professorId], references: [id], onDelete: Cascade)
+  instituicao Instituicao @relation(fields: [instituicaoId], references: [id], onDelete: Cascade)
+
+  @@unique([professorId, instituicaoId])
+  @@index([instituicaoId])
+  @@map("professor_instituicoes")
+}
+
+// Quais disciplinas um professor leciona (N:N); a instituição é derivada de Disciplina.
+model ProfessorDisciplina {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  professorId  String   @map("professor_id") @db.Uuid
+  disciplinaId String   @map("disciplina_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  professor  Professor  @relation(fields: [professorId], references: [id], onDelete: Cascade)
+  disciplina Disciplina @relation(fields: [disciplinaId], references: [id], onDelete: Cascade)
+
+  @@unique([professorId, disciplinaId])
+  @@index([disciplinaId])
+  @@map("professor_disciplinas")
+}
+
+// Catálogo global de critérios de avaliação (didática, clareza, assiduidade, etc.).
+model CriterioAvaliacao {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome      String   @unique @db.VarChar(100)
+  descricao String?  @db.VarChar(255)
+  ordem     Int      @default(0)
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  notas NotaCriterio[]
+
+  @@map("criterios_avaliacao")
+}
+
+// Avaliação de um aluno sobre um professor em uma disciplina específica.
+model Avaliacao {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  alunoId      String    @map("aluno_id") @db.Uuid
+  professorId  String    @map("professor_id") @db.Uuid
+  disciplinaId String    @map("disciplina_id") @db.Uuid
+  anonima      Boolean   @default(false)
+  comentario   String?   @db.Text
+  recomendaria Boolean?
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  aluno      Usuario        @relation("AvaliacoesFeitas", fields: [alunoId], references: [id])
+  professor  Professor      @relation(fields: [professorId], references: [id])
+  disciplina Disciplina     @relation(fields: [disciplinaId], references: [id])
+  notas      NotaCriterio[]
+
+  // Um aluno só pode avaliar o mesmo professor uma vez por disciplina.
+  @@unique([alunoId, professorId, disciplinaId])
+  @@index([professorId])
+  @@index([disciplinaId])
+  @@map("avaliacoes")
+}
+
+// Nota (1-5) dada em cada critério dentro de uma avaliação.
+model NotaCriterio {
+  id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  avaliacaoId String @map("avaliacao_id") @db.Uuid
+  criterioId  String @map("criterio_id") @db.Uuid
+  nota        Int    @db.SmallInt
+
+  avaliacao Avaliacao         @relation(fields: [avaliacaoId], references: [id], onDelete: Cascade)
+  criterio  CriterioAvaliacao @relation(fields: [criterioId], references: [id])
+
+  @@unique([avaliacaoId, criterioId])
+  @@index([criterioId])
+  @@map("notas_criterio")
+}
