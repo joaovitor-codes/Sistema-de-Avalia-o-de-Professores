@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { CacheModule } from './cache/cache.module';
+import { ProfessoresModule } from './professores/professores.module';
 
 @Module({
   imports: [
@@ -10,6 +11,7 @@ import { CacheModule } from './cache/cache.module';
     AuthModule,
     PrismaModule,
     CacheModule,
+    ProfessoresModule,
   ],
   controllers: [],
   providers: [],

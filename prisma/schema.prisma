@@ -14,6 +14,7 @@ datasource db {
 }
 
 enum TipoUsuario {
+  COMUM
   ALUNO
   PROFESSOR
   ADMINISTRADOR
