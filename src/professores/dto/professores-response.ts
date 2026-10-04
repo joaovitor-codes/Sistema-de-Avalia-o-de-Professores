@@ -18,7 +18,11 @@ export class ProfessorResponse {
   @ApiProperty({ format: 'uuid' })
   usuarioId!: string;
 
-  @ApiPropertyOptional({ enum: Titulacao, enumName: 'Titulacao', nullable: true })
+  @ApiPropertyOptional({
+    enum: Titulacao,
+    enumName: 'Titulacao',
+    nullable: true,
+  })
   titulacao!: Titulacao | null;
 
   @ApiPropertyOptional({ nullable: true })

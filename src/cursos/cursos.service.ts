@@ -1,89 +1,91 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateCursoDto, ListCursosQueryDto, UpdateCursoDto } from './dto/cursos';
+import {
+  CreateCursoDto,
+  ListCursosQueryDto,
+  UpdateCursoDto,
+} from './dto/cursos';
 
 @Injectable()
 export class CursosService {
-    constructor(
-        private readonly prismaService: PrismaService,
-    ){}
+  constructor(private readonly prismaService: PrismaService) {}
 
-    async create(dto: CreateCursoDto){
-        const instituicao = await this.prismaService.instituicao.findFirst({
-            where: { id: dto.instituicaoId, deletedAt: null }
-        })
+  async create(dto: CreateCursoDto) {
+    const instituicao = await this.prismaService.instituicao.findFirst({
+      where: { id: dto.instituicaoId, deletedAt: null },
+    });
 
-        if(!instituicao){
-            throw new NotFoundException('Instituição não encontrada')
-        }
-
-        return this.prismaService.curso.create({
-            data: {
-                instituicaoId: dto.instituicaoId,
-                nome: dto.nome,
-                grau: dto.grau,
-            }
-        })
+    if (!instituicao) {
+      throw new NotFoundException('Instituição não encontrada');
     }
 
-    async findOne(id: string){
-        const curso = await this.prismaService.curso.findFirst({
-            where: { id, deletedAt: null }
-        })
+    return this.prismaService.curso.create({
+      data: {
+        instituicaoId: dto.instituicaoId,
+        nome: dto.nome,
+        grau: dto.grau,
+      },
+    });
+  }
 
-        if(!curso){
-            throw new NotFoundException('Curso não encontrado')
-        }
+  async findOne(id: string) {
+    const curso = await this.prismaService.curso.findFirst({
+      where: { id, deletedAt: null },
+    });
 
-        return curso;
+    if (!curso) {
+      throw new NotFoundException('Curso não encontrado');
     }
 
-    async findAll(query: ListCursosQueryDto){
-        const { page, limit, nome, grau, instituicaoId } = query;
+    return curso;
+  }
 
-        const where: Prisma.CursoWhereInput = {
-            deletedAt: null,
-            instituicaoId,
-            grau,
-            nome: nome ? { contains: nome, mode: 'insensitive' } : undefined
-        }
+  async findAll(query: ListCursosQueryDto) {
+    const { page, limit, nome, grau, instituicaoId } = query;
 
-        const [cursos, total] = await this.prismaService.$transaction([
-            this.prismaService.curso.findMany({
-                where,
-                orderBy: { nome: 'asc' },
-                skip: (page - 1) * limit,
-                take: limit,
-            }),
-            this.prismaService.curso.count({ where })
-        ]);
+    const where: Prisma.CursoWhereInput = {
+      deletedAt: null,
+      instituicaoId,
+      grau,
+      nome: nome ? { contains: nome, mode: 'insensitive' } : undefined,
+    };
 
-        return {
-            cursos,
-            total
-        };
-    }
+    const [cursos, total] = await this.prismaService.$transaction([
+      this.prismaService.curso.findMany({
+        where,
+        orderBy: { nome: 'asc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prismaService.curso.count({ where }),
+    ]);
 
-    async update(id: string, dto: UpdateCursoDto){
-        await this.findOne(id);
+    return {
+      cursos,
+      total,
+    };
+  }
 
-        return this.prismaService.curso.update({
-            where: { id },
-            data: {
-                nome: dto.nome,
-                grau: dto.grau,
-            }
-        })
-    }
+  async update(id: string, dto: UpdateCursoDto) {
+    await this.findOne(id);
 
-    async remove(id: string){
-        await this.findOne(id);
+    return this.prismaService.curso.update({
+      where: { id },
+      data: {
+        nome: dto.nome,
+        grau: dto.grau,
+      },
+    });
+  }
 
-        // Ta ai oq tu pediu Vitor, tmj
-        await this.prismaService.curso.update({
-            where: { id },
-            data: { deletedAt: new Date() }
-        })
-    }
+  async remove(id: string) {
+    await this.findOne(id);
+
+    // Ta ai oq tu pediu Vitor, tmj
+    await this.prismaService.curso.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+  }
 }

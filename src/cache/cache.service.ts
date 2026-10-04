@@ -4,7 +4,7 @@ import type { Cache } from 'cache-manager';
 
 @Injectable()
 export class CacheService {
-    constructor(
+  constructor(
     @Inject(CACHE_MANAGER)
     private readonly cacheManager: Cache,
   ) {}

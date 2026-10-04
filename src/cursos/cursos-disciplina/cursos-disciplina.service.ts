@@ -3,100 +3,106 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class CursosDisciplinaService {
-    constructor(
-        private readonly prismaService: PrismaService,
-    ){}
+  constructor(private readonly prismaService: PrismaService) {}
 
-    async findAllByCursoId(cursoId: string){
-        const disciplinas = await this.prismaService.cursoDisciplina.findMany({
-            where: { cursoId },
-            include: { curso: true, disciplina: true },
+  async findAllByCursoId(cursoId: string) {
+    const disciplinas = await this.prismaService.cursoDisciplina.findMany({
+      where: { cursoId },
+      include: { curso: true, disciplina: true },
+    });
 
-        })
-
-        if(!disciplinas || disciplinas.length === 0){
-            throw new NotFoundException('Nenhuma disciplina encontrada para este curso')
-        }
-
-        return disciplinas;
+    if (!disciplinas || disciplinas.length === 0) {
+      throw new NotFoundException(
+        'Nenhuma disciplina encontrada para este curso',
+      );
     }
 
-    async vincularCursoDisciplina(cursoId: string, disciplinaId: string){
-        const disciplina = await this.prismaService.disciplina.findUnique({
-            where: { id: disciplinaId, deletedAt: null }
-        })
+    return disciplinas;
+  }
 
-        if(!disciplina){
-            throw new NotFoundException('Disciplina não encontrada')
-        }
+  async vincularCursoDisciplina(cursoId: string, disciplinaId: string) {
+    const disciplina = await this.prismaService.disciplina.findUnique({
+      where: { id: disciplinaId, deletedAt: null },
+    });
 
-        const curso = await this.prismaService.curso.findUnique({
-            where: { id: cursoId, deletedAt: null }
-        })
-
-        if(!curso){
-            throw new NotFoundException('Curso não encontrado')
-        }
-        
-        const cursoDisciplina = await this.prismaService.cursoDisciplina.create({
-            data: {
-                cursoId,
-                disciplinaId
-            }
-        })
-
-        return cursoDisciplina;
+    if (!disciplina) {
+      throw new NotFoundException('Disciplina não encontrada');
     }
 
-    async desvincularCursoDisciplina(cursoId: string, disciplinaId: string){
-        const cursoDisciplina = await this.prismaService.cursoDisciplina.findFirst({
-            where: { cursoId, disciplinaId }
-        })
-        
-        if(!cursoDisciplina){
-            throw new NotFoundException('Vinculo não encontrado')
-        }
+    const curso = await this.prismaService.curso.findUnique({
+      where: { id: cursoId, deletedAt: null },
+    });
 
-        await this.prismaService.cursoDisciplina.delete({
-            where: { id: cursoDisciplina.id }
-        })
+    if (!curso) {
+      throw new NotFoundException('Curso não encontrado');
     }
 
-    async findAllByDisciplinaId(disciplinaId: string){
-        const cursos = await this.prismaService.cursoDisciplina.findMany({
-            where: { disciplinaId },
-            include: { curso: true, disciplina: true },
-        })
+    const cursoDisciplina = await this.prismaService.cursoDisciplina.create({
+      data: {
+        cursoId,
+        disciplinaId,
+      },
+    });
 
-        if(!cursos || cursos.length === 0){
-            throw new NotFoundException('Nenhum curso encontrado para esta disciplina')
-        }
+    return cursoDisciplina;
+  }
 
-        return cursos;
+  async desvincularCursoDisciplina(cursoId: string, disciplinaId: string) {
+    const cursoDisciplina = await this.prismaService.cursoDisciplina.findFirst({
+      where: { cursoId, disciplinaId },
+    });
+
+    if (!cursoDisciplina) {
+      throw new NotFoundException('Vinculo não encontrado');
     }
 
-    async updateCursoDisciplina(cursoId: string, disciplinaId: string, newDisciplinaId: string){
-        const cursoDisciplina = await this.prismaService.cursoDisciplina.findFirst({
-            where: { cursoId, disciplinaId }
-        })
+    await this.prismaService.cursoDisciplina.delete({
+      where: { id: cursoDisciplina.id },
+    });
+  }
 
-        if(!cursoDisciplina){
-            throw new NotFoundException('Vinculo não encontrado')
-        }
+  async findAllByDisciplinaId(disciplinaId: string) {
+    const cursos = await this.prismaService.cursoDisciplina.findMany({
+      where: { disciplinaId },
+      include: { curso: true, disciplina: true },
+    });
 
-        const newDisciplina = await this.prismaService.disciplina.findUnique({
-            where: { id: newDisciplinaId, deletedAt: null }
-        })
-        
-        if(!newDisciplina){
-            throw new NotFoundException('Nova disciplina não encontrada')
-        }
-
-        const updatedCursoDisciplina = await this.prismaService.cursoDisciplina.update({
-            where: { id: cursoDisciplina.id },
-            data: { disciplinaId: newDisciplinaId }
-        })
-
-        return updatedCursoDisciplina;
+    if (!cursos || cursos.length === 0) {
+      throw new NotFoundException(
+        'Nenhum curso encontrado para esta disciplina',
+      );
     }
+
+    return cursos;
+  }
+
+  async updateCursoDisciplina(
+    cursoId: string,
+    disciplinaId: string,
+    newDisciplinaId: string,
+  ) {
+    const cursoDisciplina = await this.prismaService.cursoDisciplina.findFirst({
+      where: { cursoId, disciplinaId },
+    });
+
+    if (!cursoDisciplina) {
+      throw new NotFoundException('Vinculo não encontrado');
+    }
+
+    const newDisciplina = await this.prismaService.disciplina.findUnique({
+      where: { id: newDisciplinaId, deletedAt: null },
+    });
+
+    if (!newDisciplina) {
+      throw new NotFoundException('Nova disciplina não encontrada');
+    }
+
+    const updatedCursoDisciplina =
+      await this.prismaService.cursoDisciplina.update({
+        where: { id: cursoDisciplina.id },
+        data: { disciplinaId: newDisciplinaId },
+      });
+
+    return updatedCursoDisciplina;
+  }
 }

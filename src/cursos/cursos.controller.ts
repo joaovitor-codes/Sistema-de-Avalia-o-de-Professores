@@ -28,7 +28,11 @@ import { AuthGuard } from '../auth/auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { CursosService } from './cursos.service';
-import { CreateCursoDto, ListCursosQueryDto, UpdateCursoDto } from './dto/cursos';
+import {
+  CreateCursoDto,
+  ListCursosQueryDto,
+  UpdateCursoDto,
+} from './dto/cursos';
 import { CursosDisciplinaService } from './cursos-disciplina/cursos-disciplina.service';
 
 @ApiTags('Cursos')
@@ -39,13 +43,15 @@ import { CursosDisciplinaService } from './cursos-disciplina/cursos-disciplina.s
 export class CursosController {
   constructor(
     private readonly cursosService: CursosService,
-    private readonly cursoDisciplinaService: CursosDisciplinaService
+    private readonly cursoDisciplinaService: CursosDisciplinaService,
   ) {}
 
   @Post()
   @Roles(TipoUsuario.ADMINISTRADOR)
   @ApiOperation({ summary: 'Cria um curso numa instituição' })
-  @ApiBadRequestResponse({ description: 'Dados inválidos ou grau fora do enum' })
+  @ApiBadRequestResponse({
+    description: 'Dados inválidos ou grau fora do enum',
+  })
   @ApiNotFoundResponse({ description: 'Instituição não encontrada' })
   async create(@Body() dto: CreateCursoDto) {
     return this.cursosService.create(dto);
@@ -67,7 +73,9 @@ export class CursosController {
   @Patch(':id')
   @Roles(TipoUsuario.ADMINISTRADOR)
   @ApiOperation({ summary: 'Atualiza um curso' })
-  @ApiBadRequestResponse({ description: 'Dados inválidos ou grau fora do enum' })
+  @ApiBadRequestResponse({
+    description: 'Dados inválidos ou grau fora do enum',
+  })
   @ApiNotFoundResponse({ description: 'Curso não encontrado' })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -89,7 +97,9 @@ export class CursosController {
   @Get(':cursoId/disciplinas')
   @ApiOperation({ summary: 'Lista disciplinas de um curso' })
   @ApiNotFoundResponse({ description: 'Curso não encontrado' })
-  async findAllDisciplinasByCursoId(@Param('cursoId', ParseUUIDPipe) cursoId: string) {
+  async findAllDisciplinasByCursoId(
+    @Param('cursoId', ParseUUIDPipe) cursoId: string,
+  ) {
     return this.cursoDisciplinaService.findAllByCursoId(cursoId);
   }
 
@@ -97,8 +107,14 @@ export class CursosController {
   @Roles(TipoUsuario.ADMINISTRADOR)
   @ApiOperation({ summary: 'Vincula uma disciplina a um curso' })
   @ApiNotFoundResponse({ description: 'Curso ou disciplina não encontrados' })
-  async createCursoDisciplina(@Param('cursoId', ParseUUIDPipe) cursoId: string, @Param('disciplinaId', ParseUUIDPipe) disciplinaId: string) {
-    return this.cursoDisciplinaService.vincularCursoDisciplina(cursoId, disciplinaId);
+  async createCursoDisciplina(
+    @Param('cursoId', ParseUUIDPipe) cursoId: string,
+    @Param('disciplinaId', ParseUUIDPipe) disciplinaId: string,
+  ) {
+    return this.cursoDisciplinaService.vincularCursoDisciplina(
+      cursoId,
+      disciplinaId,
+    );
   }
 
   @Delete(':cursoId/disciplinas/:disciplinaId')
@@ -107,8 +123,14 @@ export class CursosController {
   @ApiOperation({ summary: 'Desvincula uma disciplina de um curso' })
   @ApiNoContentResponse({ description: 'Disciplina desvinculada do curso' })
   @ApiNotFoundResponse({ description: 'Vínculo não encontrado' })
-  async removeCursoDisciplina(@Param('cursoId', ParseUUIDPipe) cursoId: string, @Param('disciplinaId', ParseUUIDPipe) disciplinaId: string) {
-    await this.cursoDisciplinaService.desvincularCursoDisciplina(cursoId, disciplinaId);
+  async removeCursoDisciplina(
+    @Param('cursoId', ParseUUIDPipe) cursoId: string,
+    @Param('disciplinaId', ParseUUIDPipe) disciplinaId: string,
+  ) {
+    await this.cursoDisciplinaService.desvincularCursoDisciplina(
+      cursoId,
+      disciplinaId,
+    );
   }
 
   @Patch(':cursoId/disciplinas/:disciplinaId/:newDisciplinaId')
@@ -120,6 +142,10 @@ export class CursosController {
     @Param('disciplinaId', ParseUUIDPipe) disciplinaId: string,
     @Param('newDisciplinaId', ParseUUIDPipe) newDisciplinaId: string,
   ) {
-    return this.cursoDisciplinaService.updateCursoDisciplina(cursoId, disciplinaId, newDisciplinaId);
+    return this.cursoDisciplinaService.updateCursoDisciplina(
+      cursoId,
+      disciplinaId,
+      newDisciplinaId,
+    );
   }
 }

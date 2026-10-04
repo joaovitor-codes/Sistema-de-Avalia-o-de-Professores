@@ -64,28 +64,40 @@ describe('Application (e2e)', () => {
   });
 
   it('should list cursos through the HTTP layer', async () => {
-    cursosServiceMock.findAll.mockResolvedValue({ cursos: [{ id: 'curso-1' }], total: 1 });
+    cursosServiceMock.findAll.mockResolvedValue({
+      cursos: [{ id: 'curso-1' }],
+      total: 1,
+    });
+    const httpServer = app.getHttpServer() as unknown as import('http').Server;
 
-    await request(app.getHttpServer())
+    await request(httpServer)
       .get('/api/cursos?page=1&limit=20')
       .expect(200)
       .expect(({ body }) => {
         expect(body).toEqual({ cursos: [{ id: 'curso-1' }], total: 1 });
       });
 
-    expect(cursosServiceMock.findAll).toHaveBeenCalledWith({ page: 1, limit: 20 });
+    expect(cursosServiceMock.findAll).toHaveBeenCalledWith({
+      page: 1,
+      limit: 20,
+    });
   });
 
   it('should fetch a curso by id through the HTTP layer', async () => {
-    cursosServiceMock.findOne.mockResolvedValue({ id: '11111111-1111-1111-1111-111111111111' });
+    cursosServiceMock.findOne.mockResolvedValue({
+      id: '11111111-1111-1111-1111-111111111111',
+    });
+    const httpServer = app.getHttpServer() as unknown as import('http').Server;
 
-    await request(app.getHttpServer())
+    await request(httpServer)
       .get('/api/cursos/11111111-1111-1111-1111-111111111111')
       .expect(200)
       .expect(({ body }) => {
         expect(body).toEqual({ id: '11111111-1111-1111-1111-111111111111' });
       });
 
-    expect(cursosServiceMock.findOne).toHaveBeenCalledWith('11111111-1111-1111-1111-111111111111');
+    expect(cursosServiceMock.findOne).toHaveBeenCalledWith(
+      '11111111-1111-1111-1111-111111111111',
+    );
   });
 });

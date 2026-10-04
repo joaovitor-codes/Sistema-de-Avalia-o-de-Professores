@@ -33,10 +33,15 @@ describe('CursosService', () => {
       grau: GrauAcademico.BACHARELADO,
     };
 
-    prismaService.instituicao.findFirst.mockResolvedValue({ id: dto.instituicaoId });
+    prismaService.instituicao.findFirst.mockResolvedValue({
+      id: dto.instituicaoId,
+    });
     prismaService.curso.create.mockResolvedValue({ id: 'curso-1', ...dto });
 
-    await expect(service.create(dto as never)).resolves.toEqual({ id: 'curso-1', ...dto });
+    await expect(service.create(dto as never)).resolves.toEqual({
+      id: 'curso-1',
+      ...dto,
+    });
     expect(prismaService.instituicao.findFirst).toHaveBeenCalledWith({
       where: { id: dto.instituicaoId, deletedAt: null },
     });
@@ -53,14 +58,16 @@ describe('CursosService', () => {
         instituicaoId: '11111111-1111-1111-1111-111111111111',
         nome: 'Ciência da Computação',
         grau: GrauAcademico.BACHARELADO,
-      } as never),
+      }),
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it('deve buscar um curso por id', async () => {
     prismaService.curso.findFirst.mockResolvedValue({ id: 'curso-1' });
 
-    await expect(service.findOne('curso-1')).resolves.toEqual({ id: 'curso-1' });
+    await expect(service.findOne('curso-1')).resolves.toEqual({
+      id: 'curso-1',
+    });
     expect(prismaService.curso.findFirst).toHaveBeenCalledWith({
       where: { id: 'curso-1', deletedAt: null },
     });
@@ -76,7 +83,7 @@ describe('CursosService', () => {
         nome: 'computação',
         grau: GrauAcademico.BACHARELADO,
         instituicaoId: '11111111-1111-1111-1111-111111111111',
-      } as never),
+      }),
     ).resolves.toEqual({ cursos: [{ id: 'curso-1' }], total: 1 });
 
     expect(prismaService.$transaction).toHaveBeenCalledTimes(1);
@@ -103,9 +110,14 @@ describe('CursosService', () => {
 
   it('deve atualizar um curso existente', async () => {
     prismaService.curso.findFirst.mockResolvedValue({ id: 'curso-1' });
-    prismaService.curso.update.mockResolvedValue({ id: 'curso-1', nome: 'Novo nome' });
+    prismaService.curso.update.mockResolvedValue({
+      id: 'curso-1',
+      nome: 'Novo nome',
+    });
 
-    await expect(service.update('curso-1', { nome: 'Novo nome' } as never)).resolves.toEqual({
+    await expect(
+      service.update('curso-1', { nome: 'Novo nome' }),
+    ).resolves.toEqual({
       id: 'curso-1',
       nome: 'Novo nome',
     });
@@ -120,9 +132,18 @@ describe('CursosService', () => {
     prismaService.curso.update.mockResolvedValue({ id: 'curso-1' });
 
     await expect(service.remove('curso-1')).resolves.toBeUndefined();
-    expect(prismaService.curso.update).toHaveBeenCalledWith({
-      where: { id: 'curso-1' },
-      data: { deletedAt: expect.any(Date) },
-    });
+    const updateCalls = prismaService.curso.update.mock
+      .calls as unknown as Array<
+      [
+        {
+          where: { id: string };
+          data: { deletedAt: Date };
+        },
+      ]
+    >;
+    const updateArgs = updateCalls[0][0];
+
+    expect(updateArgs.where).toEqual({ id: 'curso-1' });
+    expect(updateArgs.data.deletedAt).toBeInstanceOf(Date);
   });
 });
