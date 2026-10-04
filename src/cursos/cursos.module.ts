@@ -6,6 +6,6 @@ import { CursosDisciplinaService } from './cursos-disciplina/cursos-disciplina.s
 @Module({
   providers: [CursosService, CursosDisciplinaService],
   controllers: [CursosController],
-  exports: [CursosService],
+  exports: [CursosService, CursosDisciplinaService],
 })
 export class CursosModule {}
