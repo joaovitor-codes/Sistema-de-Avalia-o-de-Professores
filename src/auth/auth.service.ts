@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { MailerService } from '@nestjs-modules/mailer';
 import {
@@ -398,18 +398,21 @@ export class AuthService {
       this.configService.get<string>('JWT_EXPIRES_IN') ?? '1h';
     const refreshTokenExpiresIn =
       this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') ?? '7d';
-    const accessToken = this.jwtService.sign(payload, {
-      expiresIn: accessTokenExpiresIn,
-    });
+    const accessTokenOptions: JwtSignOptions = {
+      expiresIn: accessTokenExpiresIn as JwtSignOptions['expiresIn'],
+    };
+    const refreshTokenOptions: JwtSignOptions = {
+      expiresIn: refreshTokenExpiresIn as JwtSignOptions['expiresIn'],
+    };
+    const accessToken = this.jwtService.sign(payload, accessTokenOptions);
+    const refreshPayload: RefreshTokenPayload = {
+      sub: usuario.id,
+      tokenType: 'refresh',
+      sid: currentSessionId,
+    };
     const refreshToken = this.jwtService.sign(
-      {
-        sub: usuario.id,
-        tokenType: 'refresh',
-        sid: currentSessionId,
-      },
-      {
-        expiresIn: refreshTokenExpiresIn,
-      },
+      refreshPayload,
+      refreshTokenOptions,
     );
     const decodedRefresh: unknown = this.jwtService.decode(refreshToken);
     if (
