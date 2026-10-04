@@ -75,6 +75,22 @@ npx prisma studio      # abre uma UI para inspecionar os dados
 npx prisma format      # formata e valida o schema.prisma
 ```
 
+### Dados de exemplo (seed)
+
+Pra popular o banco com instituições, cursos, disciplinas, professores e algumas avaliações fictícias:
+
+```bash
+npx prisma db seed
+```
+
+Pode rodar mais de uma vez que não duplica. Todos os usuários criados usam a senha `senha123`:
+
+| Email | Tipo |
+|---|---|
+| `admin@teste.com` | ADMINISTRADOR |
+| `joana.aluna@teste.com`, `pedro.aluno@teste.com` | ALUNO |
+| `carlos.menezes@teste.com`, `fernanda.souza@teste.com`, `ricardo.barros@teste.com`, `helena.costa@teste.com` | PROFESSOR |
+
 ## 5. Rodar a aplicação
 
 ```bash

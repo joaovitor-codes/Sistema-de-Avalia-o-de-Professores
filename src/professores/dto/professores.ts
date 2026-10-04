@@ -5,6 +5,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUUID,
   Max,
   Min,
 } from '@nestjs/class-validator';
@@ -13,21 +14,19 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Titulacao } from '@prisma/client';
 
 export class CreateProfessorDto {
-  @ApiProperty({ example: 'Maria Silva' })
-  @IsNotEmpty()
-  name!: string;
-  @ApiProperty({ example: 'maria.silva@email.com', format: 'email' })
-  @IsEmail()
-  email!: string;
-  @ApiProperty({ example: 'senhaSegura123', format: 'password' })
-  @IsNotEmpty()
-  password!: string;
+    @ApiProperty({ example: 'Maria Silva' })
+    @IsNotEmpty()
+    name!: string;
+    @ApiProperty({ example: 'maria.silva@email.com', format: 'email' })
+    @IsEmail()
+    email!: string;
+    @ApiProperty({ example: 'senhaSegura123', format: 'password' })
+    @IsNotEmpty()
+    password!: string;
 }
 
 export class UpdateProfessorDto {
-  @ApiPropertyOptional({
-    example: 'Professora de Engenharia de Software há 10 anos.',
-  })
+  @ApiPropertyOptional({ example: 'Professora de Engenharia de Software há 10 anos.' })
   @IsOptional()
   @IsString()
   biografia?: string;
@@ -54,11 +53,23 @@ export class ListProfessoresQueryDto {
   @Max(100)
   limit: number = 20;
 
-  @ApiPropertyOptional({
-    description:
-      'Filtra pelo nome do professor (sem diferenciar maiúsculas/minúsculas)',
-  })
+  @ApiPropertyOptional({ description: 'Filtra pelo nome do professor (sem diferenciar maiúsculas/minúsculas)' })
   @IsOptional()
   @IsString()
   nome?: string;
+
+  @ApiPropertyOptional({ format: 'uuid', description: 'Só professores que atuam nessa instituição' })
+  @IsOptional()
+  @IsUUID()
+  instituicaoId?: string;
+
+  @ApiPropertyOptional({ format: 'uuid', description: 'Só professores que lecionam alguma disciplina da grade desse curso' })
+  @IsOptional()
+  @IsUUID()
+  cursoId?: string;
+
+  @ApiPropertyOptional({ format: 'uuid', description: 'Só professores que lecionam essa disciplina' })
+  @IsOptional()
+  @IsUUID()
+  disciplinaId?: string;
 }

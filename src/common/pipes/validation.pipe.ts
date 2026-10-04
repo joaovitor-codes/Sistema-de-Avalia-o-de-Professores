@@ -8,8 +8,6 @@ import {
 import { plainToClass } from '@nestjs/class-transformer';
 import { validate } from '@nestjs/class-validator';
 
-// @nestjs/common's built-in ValidationPipe hardcodes `require('class-validator')`,
-// which is incompatible with the `@nestjs/class-validator` fork used in this project's DTOs.
 @Injectable()
 export class ValidationPipe implements PipeTransform {
   async transform(value: unknown, metadata: ArgumentMetadata) {

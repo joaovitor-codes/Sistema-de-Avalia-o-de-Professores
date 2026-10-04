@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -99,7 +93,6 @@ model Endereco {
   usuarioId   String?  @map("usuario_id") @db.Uuid
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  // onDelete: Cascade: um endereço sem dono não tem razão de existir.
   usuario Usuario? @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@index([usuarioId])
@@ -164,10 +157,6 @@ model TentativaLogin {
   @@index([emailTentado, createdAt])
   @@map("tentativas_login")
 }
-
-// =========================================================================
-// Domínio: instituições, cursos, disciplinas, professores e avaliações
-// =========================================================================
 
 enum GrauAcademico {
   TECNICO
@@ -244,7 +233,7 @@ model Disciplina {
   @@map("disciplinas")
 }
 
-// Grade curricular: quais disciplinas compõem quais cursos (N:N).
+// Liga cada curso às disciplinas da grade, usada também na busca por curso.
 model CursoDisciplina {
   id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   cursoId      String   @map("curso_id") @db.Uuid
@@ -259,7 +248,6 @@ model CursoDisciplina {
   @@map("curso_disciplinas")
 }
 
-// Perfil de professor: 1:1 com Usuario (tipoUsuario = PROFESSOR).
 model Professor {
   id        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   usuarioId String     @unique @map("usuario_id") @db.Uuid
@@ -277,7 +265,7 @@ model Professor {
   @@map("professores")
 }
 
-// Em quais instituições um professor atua (N:N).
+// Um professor pode atuar em mais de uma instituição.
 model ProfessorInstituicao {
   id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   professorId   String   @map("professor_id") @db.Uuid
@@ -293,7 +281,7 @@ model ProfessorInstituicao {
   @@map("professor_instituicoes")
 }
 
-// Quais disciplinas um professor leciona (N:N); a instituição é derivada de Disciplina.
+// Disciplinas que cada professor leciona; a instituição vem da própria disciplina.
 model ProfessorDisciplina {
   id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   professorId  String   @map("professor_id") @db.Uuid
@@ -308,7 +296,6 @@ model ProfessorDisciplina {
   @@map("professor_disciplinas")
 }
 
-// Catálogo global de critérios de avaliação (didática, clareza, assiduidade, etc.).
 model CriterioAvaliacao {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   nome      String   @unique @db.VarChar(100)
@@ -322,7 +309,6 @@ model CriterioAvaliacao {
   @@map("criterios_avaliacao")
 }
 
-// Avaliação de um aluno sobre um professor em uma disciplina específica.
 model Avaliacao {
   id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   alunoId      String    @map("aluno_id") @db.Uuid
@@ -340,14 +326,12 @@ model Avaliacao {
   disciplina Disciplina     @relation(fields: [disciplinaId], references: [id])
   notas      NotaCriterio[]
 
-  // Um aluno só pode avaliar o mesmo professor uma vez por disciplina.
   @@unique([alunoId, professorId, disciplinaId])
   @@index([professorId])
   @@index([disciplinaId])
   @@map("avaliacoes")
 }
 
-// Nota (1-5) dada em cada critério dentro de uma avaliação.
 model NotaCriterio {
   id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   avaliacaoId String @map("avaliacao_id") @db.Uuid
