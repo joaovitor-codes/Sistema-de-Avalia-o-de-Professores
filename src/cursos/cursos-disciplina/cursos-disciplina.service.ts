@@ -75,4 +75,28 @@ export class CursosDisciplinaService {
         return cursos;
     }
 
+    async updateCursoDisciplina(cursoId: string, disciplinaId: string, newDisciplinaId: string){
+        const cursoDisciplina = await this.prismaService.cursoDisciplina.findFirst({
+            where: { cursoId, disciplinaId }
+        })
+
+        if(!cursoDisciplina){
+            throw new NotFoundException('Vinculo não encontrado')
+        }
+
+        const newDisciplina = await this.prismaService.disciplina.findUnique({
+            where: { id: newDisciplinaId, deletedAt: null }
+        })
+        
+        if(!newDisciplina){
+            throw new NotFoundException('Nova disciplina não encontrada')
+        }
+
+        const updatedCursoDisciplina = await this.prismaService.cursoDisciplina.update({
+            where: { id: cursoDisciplina.id },
+            data: { disciplinaId: newDisciplinaId }
+        })
+
+        return updatedCursoDisciplina;
+    }
 }
