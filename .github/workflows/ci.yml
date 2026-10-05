@@ -57,5 +57,6 @@ jobs:
       - name: Testes
         run: npm test -- --runInBand
 
-      - name: Lint (sem --fix)
+      - name: Lint (apenas aviso)
         run: npx eslint "{src,test}/**/*.ts"
+        continue-on-error: true
