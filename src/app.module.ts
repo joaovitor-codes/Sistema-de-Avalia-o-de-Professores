@@ -7,6 +7,8 @@ import { ProfessoresModule } from './professores/professores.module';
 import { InstituicoesModule } from './instituicoes/instituicoes.module';
 import { CursosModule } from './cursos/cursos.module';
 import { DisciplinasModule } from './disciplinas/disciplinas.module';
+import { ProfessorInstituicoesModule } from './professor-instituicoes/professor-instituicoes.module';
+import { ProfessorDisciplinasModule } from './professor-disciplinas/professor-disciplinas.module';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { DisciplinasModule } from './disciplinas/disciplinas.module';
     InstituicoesModule,
     CursosModule,
     DisciplinasModule,
+    ProfessorInstituicoesModule,
+    ProfessorDisciplinasModule,
   ],
   controllers: [],
   providers: [],

@@ -14,7 +14,6 @@ jest.mock('../auth/roles.decorator', () => ({
 }));
 
 import { CursosController } from './cursos.controller';
-import { CursosDisciplinaService } from './cursos-disciplina/cursos-disciplina.service';
 import { CursosService } from './cursos.service';
 
 describe('CursosController', () => {
@@ -26,19 +25,12 @@ describe('CursosController', () => {
     update: jest.fn(),
     remove: jest.fn(),
   };
-  const cursosDisciplinaService = {
-    findAllByCursoId: jest.fn(),
-    vincularCursoDisciplina: jest.fn(),
-    desvincularCursoDisciplina: jest.fn(),
-    updateCursoDisciplina: jest.fn(),
-  };
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
       controllers: [CursosController],
       providers: [
         { provide: CursosService, useValue: cursosService },
-        { provide: CursosDisciplinaService, useValue: cursosDisciplinaService },
       ],
     }).compile();
 
@@ -101,49 +93,6 @@ describe('CursosController', () => {
 
     await expect(controller.remove('curso-1')).resolves.toBeUndefined();
     expect(cursosService.remove).toHaveBeenCalledWith('curso-1');
-  });
-
-  it('deve encaminhar operações de disciplinas do curso', async () => {
-    cursosDisciplinaService.findAllByCursoId.mockResolvedValue([
-      { id: 'vinculo-1' },
-    ]);
-    cursosDisciplinaService.vincularCursoDisciplina.mockResolvedValue({
-      id: 'vinculo-2',
-    });
-    cursosDisciplinaService.desvincularCursoDisciplina.mockResolvedValue(
-      undefined,
-    );
-    cursosDisciplinaService.updateCursoDisciplina.mockResolvedValue({
-      id: 'vinculo-3',
-    });
-
-    await expect(
-      controller.findAllDisciplinasByCursoId('curso-1'),
-    ).resolves.toEqual([{ id: 'vinculo-1' }]);
-    await expect(
-      controller.createCursoDisciplina('curso-1', 'disc-1'),
-    ).resolves.toEqual({ id: 'vinculo-2' });
-    await expect(
-      controller.removeCursoDisciplina('curso-1', 'disc-1'),
-    ).resolves.toBeUndefined();
-    await expect(
-      controller.updateCursoDisciplina('curso-1', 'disc-1', 'disc-2'),
-    ).resolves.toEqual({ id: 'vinculo-3' });
-
-    expect(cursosDisciplinaService.findAllByCursoId).toHaveBeenCalledWith(
-      'curso-1',
-    );
-    expect(
-      cursosDisciplinaService.vincularCursoDisciplina,
-    ).toHaveBeenCalledWith('curso-1', 'disc-1');
-    expect(
-      cursosDisciplinaService.desvincularCursoDisciplina,
-    ).toHaveBeenCalledWith('curso-1', 'disc-1');
-    expect(cursosDisciplinaService.updateCursoDisciplina).toHaveBeenCalledWith(
-      'curso-1',
-      'disc-1',
-      'disc-2',
-    );
   });
 
   it('deve propagar erros do service', async () => {

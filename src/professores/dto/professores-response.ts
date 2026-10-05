@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Titulacao } from '@prisma/client';
 
-// Classes usadas apenas para documentar as respostas no Swagger
+// Respostas da API de professores documentadas no Swagger.
 
 export class ProfessorCriadoResponse {
   @ApiProperty({ format: 'uuid', description: 'ID do usuário criado' })
@@ -18,11 +18,7 @@ export class ProfessorResponse {
   @ApiProperty({ format: 'uuid' })
   usuarioId!: string;
 
-  @ApiPropertyOptional({
-    enum: Titulacao,
-    enumName: 'Titulacao',
-    nullable: true,
-  })
+  @ApiPropertyOptional({ enum: Titulacao, enumName: 'Titulacao', nullable: true })
   titulacao!: Titulacao | null;
 
   @ApiPropertyOptional({ nullable: true })
@@ -54,9 +50,50 @@ class UsuarioProfessorResponse {
   conta!: ContaEmailResponse | null;
 }
 
+class InstituicaoResumoResponse {
+  @ApiProperty({ format: 'uuid' })
+  id!: string;
+
+  @ApiProperty({ example: 'Universidade Federal de Pernambuco' })
+  nome!: string;
+
+  @ApiPropertyOptional({ example: 'UFPE', nullable: true })
+  sigla!: string | null;
+}
+
+class ProfessorInstituicaoResumoResponse {
+  @ApiPropertyOptional({ example: 'Centro de Informática', nullable: true })
+  departamento!: string | null;
+
+  @ApiProperty({ type: InstituicaoResumoResponse })
+  instituicao!: InstituicaoResumoResponse;
+}
+
+class DisciplinaResumoResponse {
+  @ApiProperty({ format: 'uuid' })
+  id!: string;
+
+  @ApiProperty({ example: 'Banco de Dados' })
+  nome!: string;
+
+  @ApiPropertyOptional({ example: 'CIN0002', nullable: true })
+  codigo!: string | null;
+}
+
+class ProfessorDisciplinaResumoResponse {
+  @ApiProperty({ type: DisciplinaResumoResponse })
+  disciplina!: DisciplinaResumoResponse;
+}
+
 export class ProfessorComUsuarioResponse extends ProfessorResponse {
   @ApiProperty({ type: UsuarioProfessorResponse })
   usuario!: UsuarioProfessorResponse;
+
+  @ApiProperty({ type: [ProfessorInstituicaoResumoResponse] })
+  instituicoes!: ProfessorInstituicaoResumoResponse[];
+
+  @ApiProperty({ type: [ProfessorDisciplinaResumoResponse] })
+  disciplinas!: ProfessorDisciplinaResumoResponse[];
 }
 
 export class ListProfessoresResponse {

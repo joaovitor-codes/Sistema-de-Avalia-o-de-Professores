@@ -48,15 +48,12 @@ import {
 
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
-import * as authTypes from '../auth/auth.types';
 
 @ApiTags('Professores')
 @ApiBearerAuth()
 @ApiCookieAuth('access_token')
 @ApiUnauthorizedResponse({ description: 'Token ausente ou inválido' })
-@ApiForbiddenResponse({
-  description: 'Usuário sem permissão para esta operação',
-})
+@ApiForbiddenResponse({ description: 'Usuário sem permissão para esta operação' })
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('api/professores')
 export class ProfessoresController {
@@ -66,38 +63,35 @@ export class ProfessoresController {
   @Roles(TipoUsuario.ADMINISTRADOR)
   @ApiOperation({
     summary: 'Cria um professor',
-    description:
-      'Cria um usuário do tipo PROFESSOR com conta de acesso. Apenas ADMINISTRADOR.',
+    description: 'Cria um usuário do tipo PROFESSOR com conta de acesso. Apenas ADMINISTRADOR.',
   })
   @ApiCreatedResponse({ type: ProfessorCriadoResponse })
   @ApiBadRequestResponse({ description: 'Dados inválidos' })
   @ApiConflictResponse({ description: 'O email informado já está em uso' })
   async create(
-    @Req() req: authTypes.AuthenticatedRequest,
+    @Req() req,
     @Body() dto: CreateProfessorDto,
   ) {
     return this.professoresService.create(req.user.id, dto);
   }
 
   @Get()
-  @Roles(TipoUsuario.ADMINISTRADOR)
   @ApiOperation({
-    summary: 'Lista professores',
-    description:
-      'Lista paginada de professores ativos, com filtro opcional por nome. Apenas ADMINISTRADOR.',
+    summary: 'Lista e busca professores',
+    description: 'Lista paginada de professores ativos, com filtros opcionais por nome, instituição, curso e disciplina. O email só aparece para ADMINISTRADOR.',
   })
   @ApiOkResponse({ type: ListProfessoresResponse })
-  @ApiBadRequestResponse({ description: 'Parâmetros de paginação inválidos' })
-  async findAll(@Query() query: ListProfessoresQueryDto) {
-    return this.professoresService.findAll(query);
+  @ApiBadRequestResponse({ description: 'Parâmetros inválidos' })
+  async findAll(
+    @Query() query: ListProfessoresQueryDto,
+    @Req() req,
+  ) {
+    return this.professoresService.findAll(query, req.user);
   }
 
   @Get(':id')
   @Roles(TipoUsuario.ADMINISTRADOR)
-  @ApiOperation({
-    summary: 'Busca um professor pelo ID',
-    description: 'Apenas ADMINISTRADOR.',
-  })
+  @ApiOperation({ summary: 'Busca um professor pelo ID', description: 'Apenas ADMINISTRADOR.' })
   @ApiParam({ name: 'id', format: 'uuid', description: 'ID do professor' })
   @ApiOkResponse({ type: ProfessorResponse })
   @ApiBadRequestResponse({ description: 'ID não é um UUID válido' })
@@ -110,18 +104,15 @@ export class ProfessoresController {
   @Roles(TipoUsuario.ADMINISTRADOR, TipoUsuario.PROFESSOR)
   @ApiOperation({
     summary: 'Atualiza um professor',
-    description:
-      'ADMINISTRADOR pode editar qualquer professor; PROFESSOR apenas o próprio perfil.',
+    description: 'ADMINISTRADOR pode editar qualquer professor; PROFESSOR apenas o próprio perfil.',
   })
   @ApiParam({ name: 'id', format: 'uuid', description: 'ID do professor' })
   @ApiOkResponse({ type: ProfessorResponse })
-  @ApiBadRequestResponse({
-    description: 'Dados inválidos ou ID não é um UUID válido',
-  })
+  @ApiBadRequestResponse({ description: 'Dados inválidos ou ID não é um UUID válido' })
   @ApiNotFoundResponse({ description: 'Professor não encontrado' })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Req() req: authTypes.AuthenticatedRequest,
+    @Req() req,
     @Body() dto: UpdateProfessorDto,
   ) {
     return this.professoresService.update(id, req.user, dto);
@@ -132,8 +123,7 @@ export class ProfessoresController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Desativa um professor',
-    description:
-      'Marca o professor como removido e converte o usuário para o tipo COMUM. Apenas ADMINISTRADOR.',
+    description: 'Marca o professor como removido e converte o usuário para o tipo COMUM. Apenas ADMINISTRADOR.',
   })
   @ApiParam({ name: 'id', format: 'uuid', description: 'ID do professor' })
   @ApiNoContentResponse({ description: 'Professor desativado' })
@@ -141,7 +131,7 @@ export class ProfessoresController {
   @ApiNotFoundResponse({ description: 'Professor não encontrado' })
   async remove(
     @Param('id', ParseUUIDPipe) id: string,
-    @Req() req: authTypes.AuthenticatedRequest,
+    @Req() req,
   ) {
     await this.professoresService.remove(id, req.user);
   }

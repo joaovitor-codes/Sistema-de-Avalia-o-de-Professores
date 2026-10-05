@@ -1,10 +1,5 @@
-import {
-  IsEmail,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  Length,
-} from '@nestjs/class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString, Length } from "@nestjs/class-validator";
+
 
 export class SignUpDto {
   @IsNotEmpty()
