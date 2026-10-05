@@ -61,7 +61,7 @@ export class AuthService {
         try {
             await this.sendVerificationCode(user.conta);
         } catch {
-            
+            throw new ServiceUnavailableException('Não foi possível enviar o e-mail de verificação');
         }
 
         return this.gerarTokens(user, user.conta);
@@ -360,7 +360,7 @@ export class AuthService {
         }, {
             expiresIn: (this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') || '7d') as any,
         });
-        const decodedRefresh = this.jwtService.decode(refreshToken) as { exp: number };
+        const decodedRefresh = this.jwtService.decode(refreshToken);
         const sessionData = {
             refreshTokenHash: await bcrypt.hash(refreshToken, 10),
             expiraEm: new Date(decodedRefresh.exp * 1000),

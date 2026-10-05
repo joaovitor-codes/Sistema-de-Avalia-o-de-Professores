@@ -119,7 +119,7 @@ export class ProfessoresService {
                 return usuarioAtualizado;
             })
         }catch(error){
-            throw error
+            throw new InternalServerErrorException('Erro ao remover professor');
         }
     }
 
