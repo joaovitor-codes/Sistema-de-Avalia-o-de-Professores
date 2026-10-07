@@ -1,4 +1,16 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 
 import {
   ApiBadRequestResponse,
@@ -7,7 +19,9 @@ import {
   ApiCookieAuth,
   ApiCreatedResponse,
   ApiForbiddenResponse,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
@@ -18,7 +32,7 @@ import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import type { AuthenticatedRequest } from '../auth/auth.types';
 import { AvaliacaoService } from './avaliacao.service';
-import { CreateAvaliacaoDto } from './dto/avaliacao';
+import { CreateAvaliacaoDto, UpdateAvaliacaoDto } from './dto/avaliacao';
 
 @ApiTags('Avaliações')
 @ApiBearerAuth()
@@ -40,5 +54,40 @@ export class AvaliacaoController {
   @ApiConflictResponse({ description: 'Aluno já avaliou esse professor nessa disciplina' })
   async create(@Req() req: AuthenticatedRequest, @Body() dto: CreateAvaliacaoDto) {
     return this.avaliacaoService.avaliarProfessor(req.user.id, dto);
+  }
+
+  @Patch(':id')
+  @Roles(TipoUsuario.ALUNO)
+  @ApiOperation({
+    summary: 'Aluno edita a própria avaliação',
+    description: 'Só dentro do prazo depois de criar a avaliação (padrão 24h, env AVALIACAO_JANELA_EDICAO_HORAS). Se mandar notas, tem que mandar todas.',
+  })
+  @ApiOkResponse({ description: 'Avaliação atualizada' })
+  @ApiBadRequestResponse({ description: 'Dados inválidos ou faltam notas de critérios' })
+  @ApiForbiddenResponse({ description: 'Avaliação de outro aluno ou prazo de edição vencido' })
+  @ApiNotFoundResponse({ description: 'Avaliação não encontrada' })
+  async update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: UpdateAvaliacaoDto,
+  ) {
+    return this.avaliacaoService.updateAvaliacao(id, req.user.id, dto);
+  }
+
+  @Delete(':id')
+  @Roles(TipoUsuario.ALUNO)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Aluno remove a própria avaliação (soft delete)',
+    description: 'Mesmo prazo da edição. Depois de remover o aluno pode avaliar de novo.',
+  })
+  @ApiNoContentResponse({ description: 'Avaliação removida' })
+  @ApiForbiddenResponse({ description: 'Avaliação de outro aluno ou prazo vencido' })
+  @ApiNotFoundResponse({ description: 'Avaliação não encontrada' })
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    await this.avaliacaoService.deleteAvaliacao(id, req.user.id);
   }
 }

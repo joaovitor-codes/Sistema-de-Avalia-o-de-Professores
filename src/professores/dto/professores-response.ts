@@ -96,6 +96,36 @@ export class ProfessorComUsuarioResponse extends ProfessorResponse {
   disciplinas!: ProfessorDisciplinaResumoResponse[];
 }
 
+class MediaCriterioResponse {
+  @ApiProperty({ format: 'uuid' })
+  criterioId!: string;
+
+  @ApiProperty({ example: 'Didática' })
+  nome!: string;
+
+  @ApiPropertyOptional({ example: 4.5, nullable: true })
+  media!: number | null;
+
+  @ApiProperty({ example: 12, description: 'Quantas notas entraram na média' })
+  avaliacoes!: number;
+}
+
+class MediaProfessorResponse {
+  @ApiPropertyOptional({ example: 4.38, nullable: true, description: 'null enquanto não tem avaliação' })
+  geral!: number | null;
+
+  @ApiProperty({ example: 12 })
+  totalAvaliacoes!: number;
+
+  @ApiProperty({ type: [MediaCriterioResponse] })
+  porCriterio!: MediaCriterioResponse[];
+}
+
+export class ProfessorPerfilResponse extends ProfessorComUsuarioResponse {
+  @ApiProperty({ type: MediaProfessorResponse })
+  media!: MediaProfessorResponse;
+}
+
 export class ListProfessoresResponse {
   @ApiProperty({ type: [ProfessorComUsuarioResponse] })
   professores!: ProfessorComUsuarioResponse[];

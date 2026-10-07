@@ -114,3 +114,25 @@ export class ListAvaliacoesQueryDto {
   @IsUUID()
   disciplinaId?: string;
 }
+
+export class ListAvaliacoesProfessorQueryDto {
+  @ApiPropertyOptional({ minimum: 1, default: 1 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page: number = 1;
+
+  @ApiPropertyOptional({ minimum: 1, maximum: 100, default: 20 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit: number = 20;
+
+  @ApiPropertyOptional({ format: 'uuid', description: 'Só avaliações dessa disciplina' })
+  @IsOptional()
+  @IsUUID()
+  disciplinaId?: string;
+}
