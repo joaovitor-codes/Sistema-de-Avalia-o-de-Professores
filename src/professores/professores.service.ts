@@ -4,6 +4,34 @@ import { Prisma, TipoUsuario, Usuario } from '@prisma/client';
 import { CreateProfessorDto, ListProfessoresQueryDto, UpdateProfessorDto } from './dto/professores';
 import * as bcrypt from 'bcrypt';
 
+// o email so aparece pro administrador
+function incluirProfessor(isAdmin: boolean) {
+    return {
+        usuario: {
+            select: {
+                id: true,
+                nome: true,
+                conta: isAdmin ? { select: { email: true } } : undefined
+            }
+        },
+        instituicoes: {
+            select: {
+                departamento: true,
+                instituicao: { select: { id: true, nome: true, sigla: true } }
+            }
+        },
+        disciplinas: {
+            select: {
+                disciplina: { select: { id: true, nome: true, codigo: true } }
+            }
+        }
+    } satisfies Prisma.ProfessorInclude;
+}
+
+function arredondar(valor: number | null) {
+    return valor === null ? null : Math.round(valor * 100) / 100;
+}
+
 @Injectable()
 export class ProfessoresService {
     constructor(
@@ -70,16 +98,66 @@ export class ProfessoresService {
             }
         }
 
-    async findOne(professorId: string){
-        const professor = await this.prismaService.professor.findUnique({
-            where: { id: professorId }
+    /*
+        perfil do professor com a media geral e a media por criterio. as medias saem de agregacao
+        no banco na hora da consulta, nao tem nada salvo na tabela
+    */
+    async findOne(professorId: string, usuarioLogado: Usuario){
+        const isAdmin = usuarioLogado.tipoUsuario === TipoUsuario.ADMINISTRADOR;
+
+        const professor = await this.prismaService.professor.findFirst({
+            where: { id: professorId, deletedAt: null },
+            include: incluirProfessor(isAdmin)
         })
 
         if(!professor){
             throw new NotFoundException('Professor não encontrado')
         }
 
-        return professor;
+        const notas: Prisma.NotaCriterioWhereInput = {
+            avaliacao: { professorId, deletedAt: null }
+        };
+
+        const [geral, porCriterio, totalAvaliacoes] = await Promise.all([
+            this.prismaService.notaCriterio.aggregate({
+                where: notas,
+                _avg: { nota: true }
+            }),
+            this.prismaService.notaCriterio.groupBy({
+                by: ['criterioId'],
+                where: notas,
+                _avg: { nota: true },
+                _count: { nota: true }
+            }),
+            this.prismaService.avaliacao.count({
+                where: { professorId, deletedAt: null }
+            })
+        ]);
+
+        const criterios = await this.prismaService.criterioAvaliacao.findMany({
+            where: { id: { in: porCriterio.map(c => c.criterioId) } },
+            orderBy: { ordem: 'asc' }
+        });
+
+        const mediaPorCriterio = criterios.map(criterio => {
+            const grupo = porCriterio.find(c => c.criterioId === criterio.id);
+
+            return {
+                criterioId: criterio.id,
+                nome: criterio.nome,
+                media: arredondar(grupo?._avg.nota ?? null),
+                avaliacoes: grupo?._count.nota ?? 0
+            }
+        });
+
+        return {
+            ...professor,
+            media: {
+                geral: arredondar(geral._avg.nota),
+                totalAvaliacoes,
+                porCriterio: mediaPorCriterio
+            }
+        };
     }
 
     async remove(professorId: string, usuarioLogado: Usuario){
@@ -193,26 +271,7 @@ export class ProfessoresService {
                 orderBy: { usuario: { nome: 'asc' } },
                 skip: (page - 1) * limit,
                 take: limit,
-                include: {
-                    usuario: {
-                        select: {
-                            id: true,
-                            nome: true,
-                            conta: isAdmin ? { select: { email: true } } : undefined
-                        }
-                    },
-                    instituicoes: {
-                        select: {
-                            departamento: true,
-                            instituicao: { select: { id: true, nome: true, sigla: true } }
-                        }
-                    },
-                    disciplinas: {
-                        select: {
-                            disciplina: { select: { id: true, nome: true, codigo: true } }
-                        }
-                    }
-                }
+                include: incluirProfessor(isAdmin)
             }),
             this.prismaService.professor.count({ where })
         ]);

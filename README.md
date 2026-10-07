@@ -41,6 +41,7 @@ Variáveis usadas:
 | `EMAIL_VERIFICATION_CODE_EXPIRES_MINUTES` | Validade do código de verificação de e-mail | `15` |
 | `EMAIL_VERIFICATION_MAX_RESEND_ATTEMPTS` | Máximo de reenvios de código dentro da janela abaixo | `3` |
 | `EMAIL_VERIFICATION_RESEND_WINDOW_MINUTES` | Janela (em minutos) usada no limite de reenvio | `15` |
+| `AVALIACAO_JANELA_EDICAO_HORAS` | Prazo (em horas, contado da criação) em que o aluno pode editar ou apagar a própria avaliação | `24` |
 
 > **Importante:** `JWT_SECRET` deve ser um valor aleatório e forte em qualquer ambiente além do local. Para gerar um:
 > ```bash

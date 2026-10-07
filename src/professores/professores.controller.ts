@@ -43,6 +43,7 @@ import {
 import {
   ListProfessoresResponse,
   ProfessorCriadoResponse,
+  ProfessorPerfilResponse,
   ProfessorResponse,
 } from './dto/professores-response';
 
@@ -90,14 +91,19 @@ export class ProfessoresController {
   }
 
   @Get(':id')
-  @Roles(TipoUsuario.ADMINISTRADOR)
-  @ApiOperation({ summary: 'Busca um professor pelo ID', description: 'Apenas ADMINISTRADOR.' })
+  @ApiOperation({
+    summary: 'Perfil do professor com médias',
+    description: 'Dados do professor, instituições, disciplinas e a média geral e por critério das avaliações. O email só aparece para ADMINISTRADOR.',
+  })
   @ApiParam({ name: 'id', format: 'uuid', description: 'ID do professor' })
-  @ApiOkResponse({ type: ProfessorResponse })
+  @ApiOkResponse({ type: ProfessorPerfilResponse })
   @ApiBadRequestResponse({ description: 'ID não é um UUID válido' })
   @ApiNotFoundResponse({ description: 'Professor não encontrado' })
-  async findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.professoresService.findOne(id);
+  async findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req,
+  ) {
+    return this.professoresService.findOne(id, req.user);
   }
 
   @Patch(':id')
