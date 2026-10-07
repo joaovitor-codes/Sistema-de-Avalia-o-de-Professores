@@ -48,7 +48,8 @@ const criterios = [
     { nome: 'Didática', descricao: 'Consegue explicar o conteúdo de um jeito que dá pra entender', ordem: 1 },
     { nome: 'Clareza', descricao: 'Objetividade nas aulas e nas cobranças', ordem: 2 },
     { nome: 'Assiduidade', descricao: 'Aparece nas aulas e cumpre o cronograma', ordem: 3 },
-    { nome: 'Domínio do conteúdo', descricao: 'Segurança com a matéria', ordem: 4 },
+    { nome: 'Avaliação justa', descricao: 'Provas e trabalhos condizem com o que foi dado em aula', ordem: 4 },
+    { nome: 'Disponibilidade', descricao: 'Tira dúvidas fora da aula e responde os alunos', ordem: 5 },
 ];
 
 const alunos = [
@@ -106,7 +107,7 @@ const avaliacoes = [
         anonima: false,
         comentario: 'Explica muito bem, as listas de exercício ajudam bastante.',
         recomendaria: true,
-        notas: [5, 4, 5, 5],
+        notas: [5, 4, 5, 5, 4],
     },
     {
         aluno: 'pedro.aluno@teste.com',
@@ -115,7 +116,7 @@ const avaliacoes = [
         anonima: true,
         comentario: 'Prova pesada, mas justa.',
         recomendaria: true,
-        notas: [4, 4, 5, 5],
+        notas: [4, 4, 5, 4, 3],
     },
     {
         aluno: 'joana.aluna@teste.com',
@@ -124,7 +125,7 @@ const avaliacoes = [
         anonima: false,
         comentario: null,
         recomendaria: true,
-        notas: [5, 5, 4, 4],
+        notas: [5, 5, 4, 5, 5],
     },
     {
         aluno: 'pedro.aluno@teste.com',
@@ -133,7 +134,7 @@ const avaliacoes = [
         anonima: true,
         comentario: 'Conteúdo puxado e pouco tempo de revisão antes das provas.',
         recomendaria: false,
-        notas: [3, 3, 4, 5],
+        notas: [3, 3, 4, 2, 3],
     },
 ];
 
@@ -201,11 +202,17 @@ async function main() {
     for (const c of criterios) {
         const criterio = await prisma.criterioAvaliacao.upsert({
             where: { nome: c.nome },
-            update: {},
+            update: { descricao: c.descricao, ordem: c.ordem, ativo: true },
             create: c,
         });
         criterioMap.push(criterio.id);
     }
+
+    // Critérios que saíram da lista padrão ficam inativos (não dá pra apagar por causa das notas já dadas).
+    await prisma.criterioAvaliacao.updateMany({
+        where: { nome: { notIn: criterios.map((c) => c.nome) } },
+        data: { ativo: false },
+    });
 
     await criarUsuario('Administrador', 'admin@teste.com', TipoUsuario.ADMINISTRADOR, senhaHash);
 
@@ -275,7 +282,7 @@ async function main() {
 
     console.log('Seed ok.');
     console.log(`Instituições: ${instituicoes.length} | Cursos: ${cursos.length} | Disciplinas: ${disciplinas.length}`);
-    console.log(`Professores: ${professores.length} | Alunos: ${alunos.length} | Avaliações: ${avaliacoes.length}`);
+    console.log(`Critérios: ${criterios.length} | Professores: ${professores.length} | Alunos: ${alunos.length} | Avaliações: ${avaliacoes.length}`);
     console.log(`Logins (senha ${SENHA}): admin@teste.com, joana.aluna@teste.com, carlos.menezes@teste.com ...`);
 }
 
